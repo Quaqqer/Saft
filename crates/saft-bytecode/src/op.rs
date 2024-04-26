@@ -28,7 +28,7 @@ pub enum Op {
     Eq,
     Ne,
     /// Pop n + 1 values, then push the last one, used in blocks
-    TrailPop(usize),
+    TailPop(usize),
     Call(usize),
     Index,
     Vec(usize),

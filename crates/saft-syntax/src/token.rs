@@ -4,6 +4,8 @@ pub enum Token {
     Eof,
     Error(String),
 
+    Comment(String),
+
     Fn,
     Return,
     If,
@@ -93,6 +95,7 @@ impl Token {
             Else => "'else'".into(),
             Loop => "'loop'".into(),
             Break => "'break'".into(),
+            Comment(s) => format!("comment '{s}'"),
         }
     }
 }

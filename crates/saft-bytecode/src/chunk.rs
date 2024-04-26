@@ -4,7 +4,6 @@ use saft_syntax::span::Span;
 
 use crate::op::Op;
 
-#[derive(Debug)]
 pub struct Chunk {
     ops: Vec<Op>,
     spans: Vec<Span>,
@@ -45,5 +44,15 @@ impl Chunk {
 
     pub fn get_span(&self, i: usize) -> Option<&Span> {
         self.spans.get(i)
+    }
+}
+
+impl std::fmt::Debug for Chunk {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "Chunk")?;
+        for (i, (op, _span)) in self.ops.iter().zip(&self.spans).enumerate() {
+            writeln!(f, "  {:3}  {:?}", i, op)?;
+        }
+        Ok(())
     }
 }

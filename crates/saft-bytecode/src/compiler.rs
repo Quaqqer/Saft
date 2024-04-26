@@ -12,6 +12,7 @@ use crate::{
     value::{Function, NativeFunction, SaftFunction},
 };
 
+#[derive(Debug)]
 pub enum Error {
     Exotic {
         message: String,
@@ -57,7 +58,7 @@ macro_rules! exotic {
     };
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct Scope {
     stack_base: usize,
 }
@@ -68,10 +69,16 @@ impl Scope {
     }
 }
 
-#[derive(Clone)]
-pub struct Compiler {
+#[derive(Clone, Debug)]
+pub struct CompilerFrame {
     stack_i: usize,
+    loop_stack: Vec<usize>,
     scopes: Vec<Scope>,
+}
+
+#[derive(Clone, Debug)]
+pub struct Compiler {
+    frames: Vec<CompilerFrame>,
     ref_offsets: HashMap<ir::VarRef, usize>,
     compiled_items: Vec<CompiledItem>,
     pub constants: Vec<Constant>,
@@ -81,12 +88,35 @@ impl Compiler {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self {
-            stack_i: 0,
-            scopes: vec![Scope::new(0)],
+            frames: vec![CompilerFrame {
+                stack_i: 0,
+                loop_stack: Vec::new(),
+                scopes: Vec::new(),
+            }],
             ref_offsets: HashMap::new(),
             compiled_items: Vec::new(),
             constants: vec![],
         }
+    }
+
+    fn frame(&self) -> &CompilerFrame {
+        self.frames.last().unwrap()
+    }
+
+    fn frame_mut(&mut self) -> &mut CompilerFrame {
+        self.frames.last_mut().unwrap()
+    }
+
+    fn stack_i(&self) -> usize {
+        self.frame().stack_i
+    }
+
+    fn scopes(&self) -> &Vec<Scope> {
+        &self.frame().scopes
+    }
+
+    fn scopes_mut(&mut self) -> &mut Vec<Scope> {
+        &mut self.frame_mut().scopes
     }
 
     fn compile_items(
@@ -174,13 +204,17 @@ impl Compiler {
             })
         }
 
-        let prev_i = self.stack_i;
+        self.frames.push(CompilerFrame {
+            stack_i: 0,
+            loop_stack: Vec::new(),
+            scopes: Vec::new(),
+        });
 
-        let res = inner(self, function);
+        let res = inner(self, function)?;
 
-        self.stack_i = prev_i;
+        self.frames.pop().unwrap();
 
-        res
+        Ok(res)
     }
 
     pub fn compile_stmt(&mut self, stmt: &Spanned<ir::Stmt>) -> Result<Chunk, Error> {
@@ -231,16 +265,18 @@ impl Compiler {
 
     fn compile_untail_block(
         &mut self,
-        block: &Spanned<ir::UntailBlock>,
+        block: &ir::UntailBlock,
         chunk: &mut Chunk,
     ) -> Result<(), Error> {
-        self.compile_block(
-            &block.s.spanned(ir::Block {
-                stmts: block.v.0.clone(),
-                tail: None,
-            }),
-            chunk,
-        )
+        self.enter_scope();
+
+        for stmt in &block.0 {
+            self.compile_stmt_(stmt, chunk)?;
+        }
+
+        self.exit_scope(chunk, Span::new(0..0));
+
+        Ok(())
     }
 
     pub fn compile_expr(&mut self, expr: &Spanned<ir::Expr>) -> Result<Chunk, Error> {
@@ -273,8 +309,44 @@ impl Compiler {
             ir::Expr::Grouping(box e) => self.compile_expr_(e, chunk)?,
             ir::Expr::Block(block) => self.compile_block(block, chunk)?,
             ir::Expr::If(if_) => self.compile_if(if_, chunk)?,
-            ir::Expr::Loop(_) => todo!(),
-            ir::Expr::Break(_) => todo!(),
+            ir::Expr::Loop(block) => {
+                chunk.emit(Op::Jmp(chunk.end() + 2), s);
+
+                let loop_end = chunk.end();
+                self.frame_mut().loop_stack.push(loop_end);
+                chunk.emit(Op::Jmp(0), s);
+
+                let loop_start = chunk.end();
+
+                self.compile_untail_block(block, chunk)?;
+
+                chunk.emit(Op::Jmp(loop_start), s);
+
+                self.patch_jump(loop_end, chunk.end(), chunk);
+
+                self.frame_mut().loop_stack.pop().unwrap();
+            }
+            ir::Expr::Break(expr) => {
+                let Some(loop_end) = self.frame_mut().loop_stack.last().cloned() else {
+                    exotic!("No loop to break from", s);
+                };
+
+                match expr.as_ref() {
+                    Some(expr) => {
+                        self.compile_expr_(expr, chunk)?;
+                    }
+                    None => chunk.emit(Op::Nil, s),
+                }
+
+                // Pop declarations in loop
+                let env = self.scopes().last().unwrap();
+                let decls = self.stack_i() - env.stack_base;
+                if 0 < decls {
+                    chunk.emit(Op::TailPop(decls), s)
+                }
+
+                chunk.emit(Op::Jmp(loop_end), s);
+            }
             ir::Expr::Unary(expr, op) => {
                 self.compile_expr_(expr, chunk)?;
 
@@ -293,7 +365,7 @@ impl Compiler {
                 }
                 ir::LExpr::Var(ref_) => {
                     self.compile_expr_(expr, chunk)?;
-                    chunk.emit(Op::Assign(ref_.0), s);
+                    chunk.emit(Op::Assign(self.lookup(*ref_)?), s);
                 }
             },
             ir::Expr::Binary(lhs, rhs, op) => {
@@ -360,25 +432,27 @@ impl Compiler {
     }
 
     fn enter_scope(&mut self) {
-        self.scopes.push(Scope::new(self.stack_i));
+        let frame = self.frames.last_mut().unwrap();
+        frame.scopes.push(Scope::new(frame.stack_i));
     }
 
-    #[allow(unused)]
     fn exit_scope(&mut self, chunk: &mut Chunk, span: impl Borrow<Span>) {
-        let env = self.scopes.pop().unwrap();
+        let env = self.frames.last_mut().unwrap().scopes.pop().unwrap();
+        let decls = self.stack_i() - env.stack_base;
+        self.frame_mut().stack_i -= decls;
 
-        let to_pop = self.stack_i - env.stack_base;
-        if 0 < to_pop {
-            chunk.emit(Op::PopN(to_pop), span);
+        if 0 < decls {
+            chunk.emit(Op::PopN(decls), span);
         }
     }
 
     fn exit_scope_trailing(&mut self, chunk: &mut Chunk, span: impl Borrow<Span>) {
-        let env = self.scopes.pop().unwrap();
-        let decls = self.stack_i - env.stack_base;
+        let env = self.scopes_mut().pop().unwrap();
+        let decls = self.stack_i() - env.stack_base;
+        self.frame_mut().stack_i -= decls;
 
         if 0 < decls {
-            chunk.emit(Op::TrailPop(decls), span)
+            chunk.emit(Op::TailPop(decls), span)
         }
     }
 
@@ -411,7 +485,7 @@ impl Compiler {
     }
 
     fn declare(&mut self, ident: ir::VarRef) {
-        self.ref_offsets.insert(ident, self.stack_i);
-        self.stack_i += 1;
+        self.ref_offsets.insert(ident, self.stack_i());
+        self.frame_mut().stack_i += 1;
     }
 }

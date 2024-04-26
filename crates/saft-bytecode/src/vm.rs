@@ -120,13 +120,13 @@ impl Vm {
             let op = call_frame.chunk.get_op(call_frame.i).unwrap().clone();
             let s = call_frame.chunk.get_span(call_frame.i).unwrap().clone();
 
-            self.eval_op(&op, &s, constants)?;
+            self.exec_op(&op, &s, constants)?;
         }
 
         Ok(())
     }
 
-    fn eval_op(&mut self, op: &Op, s: &Span, constants: &[Constant]) -> Result<(), Error> {
+    fn exec_op(&mut self, op: &Op, s: &Span, constants: &[Constant]) -> Result<(), Error> {
         match op {
             Op::Pop => {
                 self.pop();
@@ -192,7 +192,7 @@ impl Vm {
             Op::Ge => self.binop(|a, b| a.ge(b).map(Into::into), s, "greater or equal")?,
             Op::Eq => self.binop(|a, b| a.eq(b).map(Into::into), s, "equal")?,
             Op::Ne => self.binop(|a, b| a.ne(b).map(Into::into), s, "not equal")?,
-            Op::TrailPop(n) => {
+            Op::TailPop(n) => {
                 let v = self.stack.pop().unwrap();
                 for _ in 0..*n {
                     self.stack.pop().unwrap();
