@@ -148,8 +148,7 @@ impl Vm {
             Op::Integer(i) => self.push(Value::Num(Num::Int(*i))),
             Op::String(s) => self.push(Value::String(s.clone())),
             Op::Var(stack_ptr) => {
-                let cpy =
-                    self.stack[self.call_stack.last().unwrap().stack_base + stack_ptr].clone();
+                let cpy = self.stack[self.stack_base() + stack_ptr].clone();
                 self.push(cpy)
             }
             Op::JmpFalse(i) => {
@@ -269,7 +268,8 @@ impl Vm {
                 self.push(Value::Vec(elems));
             }
             Op::Assign(i) => {
-                self.stack[*i] = self.stack.last().unwrap().clone();
+                let stack_i = self.stack_base() + *i;
+                self.stack[stack_i] = self.stack.last().unwrap().clone();
             }
             Op::AssignIndexable => {
                 let value = self.pop();
@@ -371,5 +371,9 @@ impl Vm {
             stack_base,
             chunk,
         })
+    }
+
+    fn stack_base(&self) -> usize {
+        self.call_stack.last().unwrap().stack_base
     }
 }
