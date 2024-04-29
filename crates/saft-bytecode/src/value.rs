@@ -113,6 +113,7 @@ impl Value {
     pub fn add(&self, rhs: &Value) -> Option<Value> {
         match (self, rhs) {
             (Value::Num(a), Value::Num(b)) => Some(a.add(b).into()),
+            (Value::String(a), Value::String(b)) => Some((a.to_owned() + b).into()),
             _ => None,
         }
     }
@@ -228,6 +229,12 @@ impl From<bool> for Value {
 impl From<Num> for Value {
     fn from(value: Num) -> Self {
         Value::Num(value)
+    }
+}
+
+impl From<String> for Value {
+    fn from(value: String) -> Self {
+        Value::String(value)
     }
 }
 

@@ -1,15 +1,15 @@
 fn fib(n) {
     if n == 0 { return 0; };
 
-    a := 0;
-    b := 1;
+    let a = 0;
+    let b = 1;
 
     loop {
         if n == 1 {
             break b;
         };
 
-        c := a + b;
+        let c = a + b;
         a = b;
         b = c;
 

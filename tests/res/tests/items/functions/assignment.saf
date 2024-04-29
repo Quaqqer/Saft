@@ -2,8 +2,8 @@ fn f(x) {
     print("Okay boomer " + x)
 }
 
-x := f;
-x(1);
+let x = f;
+x("1");
 
 # output:
 # Okay boomer 1

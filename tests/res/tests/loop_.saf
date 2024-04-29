@@ -1,6 +1,6 @@
-i := 1;
+let i = 1;
 
-x := loop {
+let x = loop {
     print(i);
 
     if i == 3 { break i + 10; };

@@ -90,7 +90,7 @@ impl<'a> Lexer<'a> {
                 '>' if Self::eat_chars(&mut cur, ">=") => mktoken!(cur, T::GreaterEqual),
                 '>' => eat_token!(cur, T::Greater),
 
-                ':' if Self::eat_chars(&mut cur, ":=") => mktoken!(cur, T::ColonEqual),
+                ':' => eat_token!(cur, T::Colon),
 
                 c if c.is_ascii_alphabetic() || c == '_' => {
                     cur.advance();
@@ -108,6 +108,7 @@ impl<'a> Lexer<'a> {
                         "else" => mktoken!(cur, T::Else),
                         "loop" => mktoken!(cur, T::Loop),
                         "break" => mktoken!(cur, T::Break),
+                        "let" => mktoken!(cur, T::Let),
                         s => mktoken!(cur, T::Identifier(s.into())),
                     }
                 }
@@ -257,15 +258,14 @@ mod test {
     #[test]
     fn operators() {
         expect_spanned_tokens(
-            "= := + - * / ^",
+            "= + - * / ^",
             vec![
                 spanned(T::Equal, 0..1),
-                spanned(T::ColonEqual, 2..4),
-                spanned(T::Plus, 5..6),
-                spanned(T::Minus, 7..8),
-                spanned(T::Star, 9..10),
-                spanned(T::Slash, 11..12),
-                spanned(T::Caret, 13..14),
+                spanned(T::Plus, 2..3),
+                spanned(T::Minus, 4..5),
+                spanned(T::Star, 6..7),
+                spanned(T::Slash, 8..9),
+                spanned(T::Caret, 10..11),
             ],
         );
     }

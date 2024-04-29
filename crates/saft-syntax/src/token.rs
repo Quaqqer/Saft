@@ -12,6 +12,7 @@ pub enum Token {
     Else,
     Loop,
     Break,
+    Let,
 
     LParen,
     RParen,
@@ -21,6 +22,7 @@ pub enum Token {
     RBracket,
     Comma,
     Semicolon,
+    Colon,
 
     Identifier(String),
     Float(f64),
@@ -32,7 +34,6 @@ pub enum Token {
 
     And,
     Or,
-    ColonEqual,
     Equal,
     Plus,
     Minus,
@@ -59,7 +60,6 @@ impl Token {
             Identifier(i) => format!("identifier '{}'", i),
             Float(f) => format!("float '{}'", f),
             Integer(i) => format!("integer '{}'", i),
-            ColonEqual => "':='".into(),
             Nil => "'nil'".into(),
             Fn => "'fn'".into(),
             LParen => "'('".into(),
@@ -96,6 +96,8 @@ impl Token {
             Loop => "'loop'".into(),
             Break => "'break'".into(),
             Comment(s) => format!("comment '{s}'"),
+            Colon => "':'".into(),
+            Let => "'let'".into(),
         }
     }
 }

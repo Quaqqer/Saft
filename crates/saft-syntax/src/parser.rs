@@ -3,7 +3,7 @@ use std::{borrow::Borrow, collections::VecDeque};
 use crate::ast;
 use crate::ast::{Block, Expr, Item, Module, Statement};
 use crate::lex::Lexer;
-use crate::span::{Span, Spanned};
+use crate::span::{spanned, Span, Spanned};
 use crate::token::Token;
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 
@@ -267,13 +267,22 @@ impl<'a> Parser<'a> {
         let st = self.peek();
 
         match st.v {
-            Token::Identifier(_) if self.peek_n(2).v == Token::ColonEqual => {
-                let ident = self.eat_ident().expect("Already peeked");
-                self.eat(Token::ColonEqual).expect("Already peeked");
+            Token::Let => {
+                let begin = self.eat(Token::Let)?;
+                let ident = self.eat_ident()?;
+                // TODO: Use the type
+                let _ty = match self.try_eat(Token::Colon).is_some() {
+                    true => Some(self.parse_ty()?),
+                    false => None,
+                };
+                self.eat(Token::Equal)?;
                 let expr = self.parse_expr()?;
 
-                let s = ident.s.join(&expr.s);
-                Ok(Spanned::new(Statement::Declare { ident, expr }, s))
+                let s = begin.join(&expr.s);
+                Ok(Spanned {
+                    v: Statement::Declare { ident, expr },
+                    s,
+                })
             }
 
             Token::Return => {
@@ -509,6 +518,10 @@ impl<'a> Parser<'a> {
             })),
             s,
         ))
+    }
+
+    fn parse_ty(&mut self) -> Result<Spanned<ast::Type>, Error> {
+        Ok(self.eat_ident()?.map(|id| ast::Type::Ident(id)))
     }
 }
 

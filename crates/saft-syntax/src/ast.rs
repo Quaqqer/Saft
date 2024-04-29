@@ -133,3 +133,7 @@ pub struct Function {
     pub params: Vec<Spanned<Ident>>,
     pub body: Spanned<Block>,
 }
+
+pub enum Type {
+    Ident(Ident),
+}

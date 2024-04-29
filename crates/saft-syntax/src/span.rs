@@ -37,11 +37,11 @@ impl<T> Spanned<T> {
         Self { v, s }
     }
 
-    pub fn map<F, U>(&self, f: F) -> Spanned<U>
+    pub fn map<F, U>(self, f: F) -> Spanned<U>
     where
-        F: Fn(&T) -> U,
+        F: Fn(T) -> U,
     {
-        Spanned::new(f(&self.v), self.s.clone())
+        Spanned::new(f(self.v), self.s.clone())
     }
 }
 
