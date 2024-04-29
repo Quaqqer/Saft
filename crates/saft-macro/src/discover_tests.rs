@@ -110,6 +110,8 @@ pub fn expand_discover_tests(
                             let node_quote = create_tests(node, test_fn_ident);
                             toks.push(quote! {
                             mod #id {
+                                use super::#test_fn_ident;
+
                                 #node_quote
                             }
 

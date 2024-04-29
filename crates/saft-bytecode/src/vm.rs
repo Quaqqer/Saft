@@ -120,7 +120,16 @@ impl Vm {
             let op = call_frame.chunk.get_op(call_frame.i).unwrap().clone();
             let s = call_frame.chunk.get_span(call_frame.i).unwrap().clone();
 
-            self.exec_op(&op, &s, constants)?;
+            match self.exec_op(&op, &s, constants) {
+                Ok(_) => {}
+                Err(err) => {
+                    // Pop all call stacks but the global one
+                    while self.call_stack.len() > 1 {
+                        self.call_stack.pop();
+                    }
+                    return Err(err);
+                }
+            };
         }
 
         Ok(())

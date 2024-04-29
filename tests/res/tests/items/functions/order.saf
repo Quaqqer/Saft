@@ -1,0 +1,8 @@
+printadd(1, 2);
+
+fn printadd(a, b) {
+    print(a + b);
+}
+
+# output:
+# 3
