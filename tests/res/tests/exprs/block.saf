@@ -1,0 +1,7 @@
+print({ 1 });
+print({ let x = 2; let y = x + 1; y });
+
+# output:
+# 1
+# 3
+

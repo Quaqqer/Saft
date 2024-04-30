@@ -426,7 +426,7 @@ impl<'a> Parser<'a> {
         }
 
         match t {
-            Token::Equal => binop!(prec::ASSIGN, true, Expr::Assign),
+            Token::Equal => binop!(prec::ASSIGN, false, Expr::Assign),
 
             Token::Or => binop!(prec::OR, true, Expr::Or),
 

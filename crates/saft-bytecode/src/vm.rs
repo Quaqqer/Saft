@@ -192,7 +192,7 @@ impl Vm {
             Op::Div => self.binop(|a, b| a.div(b), s, "division")?,
             Op::Mul => self.binop(|a, b| a.mul(b), s, "multiplication")?,
             Op::Sub => self.binop(|a, b| a.sub(b), s, "subtraction")?,
-            Op::And => self.binop(|a, b| a.add(b), s, "addition")?,
+            Op::And => self.binop(|a, b| a.and(b).map(Into::into), s, "addition")?,
             Op::Or => self.binop(|a, b| a.or(b).map(Into::into), s, "or")?,
             Op::Lt => self.binop(|a, b| a.lt(b).map(Into::into), s, "less than")?,
             Op::Le => self.binop(|a, b| a.le(b).map(Into::into), s, "less or equal")?,
