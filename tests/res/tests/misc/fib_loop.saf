@@ -1,4 +1,4 @@
-fn fib(n) {
+fn fib(n: int) -> int {
     if n == 0 { return 0; };
 
     let a = 0;
