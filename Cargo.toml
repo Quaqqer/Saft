@@ -1,12 +1,13 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/saft",
-    "crates/saft-bytecode", "crates/saft-cli",
-    "crates/saft-ir",
-    "crates/saft-macro",
-    "crates/saft-syntax",
-    "tests",
+  "crates/saft",
+  "crates/saft-bytecode",
+  "crates/saft-cli",
+  "crates/saft-ir",
+  "crates/saft-macro",
+  "crates/saft-syntax",
+  "tests",
 ]
 default-members = ["crates/saft-cli"]
 

@@ -23,16 +23,8 @@ pub struct Saft {
 #[allow(clippy::new_without_default)]
 impl Saft {
     pub fn new() -> Self {
-        let mut lowerer = Lowerer::new();
-
-        let mut add_native = |native: bytecode::value::NativeFunction| {
-            lowerer.add_item(native.name.to_string(), ir::Item::Builtin(native));
-        };
-
-        add_native(natives::print);
-
         Self {
-            lowerer,
+            lowerer: Lowerer::new(),
             compiler: bytecode::compiler::Compiler::new(),
             vm: Vm::new(),
             diagnostic_writer: codespan_reporting::term::termcolor::StandardStream::stdout(
@@ -40,6 +32,17 @@ impl Saft {
             ),
             diagnostic_config: codespan_reporting::term::Config::default(),
         }
+    }
+
+    pub fn new_with_std() -> Self {
+        let mut saft = Self::new();
+        saft.add_native(saft_bytecode::natives::print);
+        saft
+    }
+
+    fn add_native(&mut self, native: saft_bytecode::value::NativeFunction) {
+        self.lowerer
+            .add_item(native.name.to_string(), ir::Item::Builtin(native));
     }
 
     fn try_parse(&mut self, fname: &str, s: &str) -> Option<ast::Module> {

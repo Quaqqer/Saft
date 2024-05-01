@@ -18,7 +18,7 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let mut saft = Saft::new();
+    let mut saft = Saft::new_with_std();
 
     match args.script {
         Some(path) => {
