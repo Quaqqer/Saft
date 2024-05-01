@@ -111,6 +111,10 @@ impl Compiler {
         self.frame().stack_i
     }
 
+    fn stack_i_mut(&mut self) -> &mut usize {
+        &mut self.frame_mut().stack_i
+    }
+
     fn scopes(&self) -> &Vec<Scope> {
         &self.frame().scopes
     }
@@ -303,7 +307,9 @@ impl Compiler {
             ir::Expr::Vec(exprs) => {
                 for expr in exprs {
                     self.compile_expr_(expr, chunk)?;
+                    *self.stack_i_mut() += 1;
                 }
+                *self.stack_i_mut() -= exprs.len();
                 chunk.emit(Op::Vec(exprs.len()), s);
             }
             ir::Expr::Grouping(box e) => self.compile_expr_(e, chunk)?,
@@ -359,8 +365,11 @@ impl Compiler {
             ir::Expr::Assign(lexpr, expr) => match &lexpr.v {
                 ir::LExpr::Index(indexable, index) => {
                     self.compile_expr_(indexable, chunk)?;
+                    *self.stack_i_mut() += 1;
                     self.compile_expr_(index, chunk)?;
+                    *self.stack_i_mut() += 1;
                     self.compile_expr_(expr, chunk)?;
+                    *self.stack_i_mut() -= 2;
                     chunk.emit(Op::AssignIndexable, s);
                 }
                 ir::LExpr::Var(ref_) => {
@@ -390,14 +399,19 @@ impl Compiler {
 
             ir::Expr::Call(callable, args) => {
                 self.compile_expr_(callable, chunk)?;
+                *self.stack_i_mut() += 1;
                 for arg in args {
                     self.compile_expr_(arg, chunk)?;
+                    *self.stack_i_mut() += 1;
                 }
+                *self.stack_i_mut() -= 1 + args.len();
                 chunk.emit(Op::Call(args.len()), s);
             }
             ir::Expr::Index(indexable, index) => {
                 self.compile_expr_(indexable, chunk)?;
+                *self.stack_i_mut() += 1;
                 self.compile_expr_(index, chunk)?;
+                *self.stack_i_mut() -= 1;
                 chunk.emit(Op::Index, s);
             }
         }
@@ -465,8 +479,10 @@ impl Compiler {
         span: impl Borrow<Span>,
     ) -> Result<(), Error> {
         self.compile_expr_(lhs, chunk)?;
+        *self.stack_i_mut() += 1;
         self.compile_expr_(rhs, chunk)?;
         chunk.emit(op, span);
+        *self.stack_i_mut() -= 1;
         Ok(())
     }
 
