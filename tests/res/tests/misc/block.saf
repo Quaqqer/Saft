@@ -1,8 +1,12 @@
 print([1, { let x = 2; x }]);
 print({ let x = 3; let y = 2; x + y });
 print({ let x = 4; x } + { let x = 2; x });
+print( false and { let x = 3; x == 3 } or { let x = 4; x == 4 });
+print( true and { let x = 3; x == 3 } or { let x = 4; x == 4 });
 
 # output:
 # [1, 2]
 # 5
 # 6
+# true
+# true
