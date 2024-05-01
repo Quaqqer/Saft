@@ -1,6 +1,5 @@
 use std::rc::Rc;
 
-use bytecode::natives;
 use codespan_reporting::{
     files::SimpleFiles,
     term::{self, termcolor::StandardStream},
@@ -22,6 +21,7 @@ pub struct Saft {
 
 #[allow(clippy::new_without_default)]
 impl Saft {
+    /// Create a new saft instance, does not contain any prelude or anything.
     pub fn new() -> Self {
         Self {
             lowerer: Lowerer::new(),
@@ -34,17 +34,28 @@ impl Saft {
         }
     }
 
+    /// Create a saft instance with the standard library
     pub fn new_with_std() -> Self {
         let mut saft = Self::new();
         saft.add_native(saft_bytecode::natives::print);
         saft
     }
 
+    /// Add a native function to the saft interpreter/compiler. This inserts it into the global
+    /// namespace.
+    ///
+    /// * `native`: The native function
     fn add_native(&mut self, native: saft_bytecode::value::NativeFunction) {
         self.lowerer
             .add_item(native.name.to_string(), ir::Item::Builtin(native));
     }
 
+    /// Try to parse a file with a file name and content.
+    ///
+    /// If the parsing fails this will exit and print an error to stderr.
+    ///
+    /// * `fname`: The name of the file
+    /// * `s`: The content of the file
     fn try_parse(&mut self, fname: &str, s: &str) -> Option<ast::Module> {
         let mut files = SimpleFiles::new();
         let id = files.add(fname, s);
@@ -64,6 +75,11 @@ impl Saft {
         }
     }
 
+    /// Try to lower a module into a bytecode chunk. If it fails it prints an error to stderr.
+    ///
+    /// * `fname`: The file name
+    /// * `s`: The file contents
+    /// * `module`: The parsed module
     fn try_lower_and_compile(
         &mut self,
         fname: &str,
@@ -111,7 +127,12 @@ impl Saft {
         Some(chunk)
     }
 
-    pub fn try_interpret(&mut self, fname: &str, s: &str, chunk: Rc<Chunk>) -> Option<()> {
+    /// Try to interpret a chunk of bytecode. If any error occurs it prints it to stderr.
+    ///
+    /// * `fname`: The file name
+    /// * `s`: The file contents
+    /// * `chunk`: The bytecode chunk
+    fn try_interpret(&mut self, fname: &str, s: &str, chunk: Rc<Chunk>) -> Option<()> {
         let mut files = SimpleFiles::new();
         let id = files.add(fname, s);
 
@@ -132,6 +153,10 @@ impl Saft {
         }
     }
 
+    /// Parse, lower and interpret a source.
+    ///
+    /// * `fname`: The file name
+    /// * `s`: The file contents
     pub fn interpret_module(&mut self, fname: &str, s: &str) -> Option<()> {
         let ast = self.try_parse(fname, s)?;
         let chunk = self.try_lower_and_compile(fname, s, &ast)?;
