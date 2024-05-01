@@ -1,6 +1,6 @@
 printadd(1, 2);
 
-fn printadd(a, b) {
+fn printadd(a: int, b: int) {
     print(a + b);
 }
 

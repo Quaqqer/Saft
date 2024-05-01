@@ -120,7 +120,7 @@ impl<N: Clone> Lowerer<N> {
         self.scoped_based(|l| {
             let params = params
                 .iter()
-                .map(|ident| l.declare(ident))
+                .map(|ident| l.declare(&ident.v.name))
                 .try_collect::<Vec<_>>()?;
             let body = l.lower_block(body)?;
 

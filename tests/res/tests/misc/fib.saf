@@ -1,4 +1,4 @@
-fn fib(i) {
+fn fib(i: int) -> int {
     if i < 2 {
         i
     } else {

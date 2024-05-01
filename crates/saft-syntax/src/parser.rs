@@ -493,11 +493,17 @@ impl<'a> Parser<'a> {
         let start = self.eat(Token::Fn)?;
         let ident = self.eat_ident()?;
 
-        let mut params = Vec::new();
+        let mut params = Vec::<Spanned<ast::Parameter>>::new();
 
         self.eat(Token::LParen)?;
         while self.peek().v != Token::RParen {
-            let param = self.eat_ident()?;
+            let name = self.eat_ident()?;
+            self.eat(Token::Colon)?;
+            let ty = self.parse_ty()?;
+            let s = name.s.join(&ty.s);
+
+            let param = s.spanned(ast::Parameter { name, ty });
+
             params.push(param);
 
             if self.try_eat(Token::Comma).is_none() {
@@ -507,6 +513,12 @@ impl<'a> Parser<'a> {
 
         self.eat(Token::RParen)?;
 
+        let ret_ty = if self.try_eat(Token::Arrow).is_some() {
+            Some(self.parse_ty()?)
+        } else {
+            None
+        };
+
         let body = self.parse_block(None)?;
         let s = start.join(&body.s);
 
@@ -515,6 +527,7 @@ impl<'a> Parser<'a> {
                 ident,
                 params,
                 body,
+                ret_ty,
             })),
             s,
         ))
