@@ -80,6 +80,7 @@ impl<'a> Lexer<'a> {
                 '!' if Self::eat_chars(&mut cur, "!=") => mktoken!(cur, T::BangEqual),
                 '!' => eat_token!(cur, T::Bang),
                 '+' => eat_token!(cur, T::Plus),
+                '-' if Self::eat_chars(&mut cur, "->") => mktoken!(cur, T::Arrow),
                 '-' => eat_token!(cur, T::Minus),
                 '*' => eat_token!(cur, T::Star),
                 '/' if Self::eat_chars(&mut cur, "//") => mktoken!(cur, T::SlashSlash),

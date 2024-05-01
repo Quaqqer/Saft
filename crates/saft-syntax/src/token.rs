@@ -23,6 +23,7 @@ pub enum Token {
     Comma,
     Semicolon,
     Colon,
+    Arrow,
 
     Identifier(String),
     Float(f64),
@@ -98,6 +99,7 @@ impl Token {
             Comment(s) => format!("comment '{s}'"),
             Colon => "':'".into(),
             Let => "'let'".into(),
+            Arrow => "'->'".into(),
         }
     }
 }

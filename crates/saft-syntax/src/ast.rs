@@ -128,12 +128,20 @@ pub enum Item {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Function {
-    pub ident: Spanned<Ident>,
-    pub params: Vec<Spanned<Ident>>,
-    pub body: Spanned<Block>,
+pub struct Parameter {
+    pub name: Spanned<Ident>,
+    pub ty: Spanned<Type>,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct Function {
+    pub ident: Spanned<Ident>,
+    pub params: Vec<Spanned<Parameter>>,
+    pub body: Spanned<Block>,
+    pub ret_ty: Option<Spanned<Type>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Type {
     Ident(Ident),
 }
