@@ -511,11 +511,7 @@ dependencies = [
 name = "saft"
 version = "0.1.0"
 dependencies = [
- "clap",
  "codespan-reporting",
- "indoc",
- "platform-dirs",
- "rustyline",
  "saft-bytecode",
  "saft-ir",
  "saft-syntax",
@@ -529,6 +525,17 @@ dependencies = [
  "saft-ir",
  "saft-macro",
  "saft-syntax",
+]
+
+[[package]]
+name = "saft-cli"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "indoc",
+ "platform-dirs",
+ "rustyline",
+ "saft",
 ]
 
 [[package]]
