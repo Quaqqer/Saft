@@ -1,15 +1,10 @@
-[workspace]
-resolver = "2"
-members = [
-  "crates/saft",
-  "crates/saft-bytecode",
-  "crates/saft-cli",
-  "crates/saft-ir",
-  "crates/saft-macro",
-  "crates/saft-syntax",
-  "tests",
-]
-default-members = ["crates/saft-cli"]
+[package]
+name = "saft"
+version = "0.1.0"
+edition = "2021"
 
-[workspace.dependencies]
-codespan-reporting = "0.11.1"
+[dependencies]
+lalrpop-util = { version = "0.20.2", features = ["lexer", "unicode"] }
+
+[build-dependencies]
+lalrpop = "0.20.2"

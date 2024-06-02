@@ -1,9 +1,0 @@
-fn f(x: int) {
-    print("Okay boomer " + x)
-}
-
-let x = f;
-x("1");
-
-# output:
-# Okay boomer 1

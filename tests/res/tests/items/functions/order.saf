@@ -1,8 +1,0 @@
-printadd(1, 2);
-
-fn printadd(a: int, b: int) {
-    print(a + b);
-}
-
-# output:
-# 3
