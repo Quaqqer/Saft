@@ -1,15 +1,85 @@
-use crate::ast::Ast;
+use crate::ast;
+use crate::span::{Spanned, Span};
 use std::str::FromStr;
 
 grammar;
 
-pub Term: i32 = {
-    <n:Num> => n,
-    "(" <t:Term> ")" => t,
+pub SpannedModule: Spanned<ast::Module> = Spanned<Module>;
+
+Module: ast::Module
+    = <items:Spanned<Item>*>
+    => ast::Module { items };
+
+Ident: String
+    = <s:r"[a-zA-Z_][a-zA-Z0-9_]*">
+    => s.to_string();
+
+Item: ast::Item
+    = "fn" <ident:Spanned<Ident>> "(" <params:Spanned<Ident>*> ")" "{" <stmts:Spanned<Stmt>*> "}"
+    => ast::Item::Fn { ident, params, stmts };
+
+Stmt: ast::Stmt = {
+    <expr:Spanned<Expr>> ";"
+        => ast::Stmt::Expr(expr),
+
+    "let" <ident:Spanned<Ident>> "=" <expr:Spanned<Expr>> ";"
+        => ast::Stmt::Let { ident, expr },
 }
 
-pub Ast: Ast = {
-    "hello world" => Ast(vec![]),
-};
+Expr: ast::Expr = {
+    #[precedence(level="0")]
+    Term,
 
-Num: i32 = <s:r"[0-9]+"> => i32::from_str(s).unwrap();
+    #[precedence(level="1")] #[assoc(side="left")]
+
+    <expr:Spanned<Expr>> "(" <args:OptionalSepBy<Spanned<Expr>, ",">> ")"
+        => ast::Expr::Call { expr: Box::new(expr), args },
+
+    <expr:Spanned<Expr>> "." <field:Spanned<Ident>>
+        => ast::Expr::Access { expr: Box::new(expr), field },
+
+    #[precedence(level="2")] #[assoc(side="left")]
+
+    <l:Spanned<Expr>> "+" <r:Spanned<Expr>>
+        => ast::Expr::Add(Box::new(l), Box::new(r)),
+
+    <l:Spanned<Expr>> "-" <r:Spanned<Expr>>
+        => ast::Expr::Sub(Box::new(l), Box::new(r)),
+
+    #[precedence(level="2")] #[assoc(side="left")]
+
+    <l:Spanned<Expr>> "*" <r:Spanned<Expr>>
+        => ast::Expr::Mul(Box::new(l), Box::new(r)),
+
+    <l:Spanned<Expr>> "/" <r:Spanned<Expr>>
+        => ast::Expr::Div(Box::new(l), Box::new(r)),
+}
+
+Term: ast::Expr = {
+    "true" => ast::Expr::Bool(true),
+    "false" => ast::Expr::Bool(false),
+
+    <var:Spanned<Ident>>
+        => ast::Expr::Var(var),
+
+    <int_s:r"[0-9]+">
+        => ast::Expr::Int(int_s.parse().unwrap()),
+}
+
+Spanned<T>: Spanned<T>
+    = <l:@L> <v:T> <r:@R>
+    => Spanned::new(v, Span::new(l, r));
+
+OptionalSepBy<T, Sep>: Vec<T>
+    = <v:SepBy<T, Sep>?>
+    => v.unwrap_or(vec![]);
+
+SepBy<T, Sep>: Vec<T>
+    = <init:First<T, Sep>*> <end:T>
+    => {
+        let mut l = init;
+        l.push(end);
+        l
+    };
+
+First<T, U>: T = <v:T> U => v;
