@@ -1,6 +1,5 @@
 use crate::ast;
 use crate::span::{Spanned, Span};
-use std::str::FromStr;
 
 grammar;
 

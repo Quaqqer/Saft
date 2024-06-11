@@ -108,9 +108,7 @@ mod tests {
         let main = &ModuleName(vec!["main".into()]);
         let lib_asserts = &ModuleName(vec!["lib".into(), "asserts".into()]);
 
-        let main = sb.query_ast(main);
-        let main = sb.query_ast(lib_asserts);
-        println!("{:?}", main);
-        panic!()
+        let _main = sb.query_ast(main).unwrap();
+        let _lib_asserts = sb.query_ast(lib_asserts).unwrap();
     }
 }
