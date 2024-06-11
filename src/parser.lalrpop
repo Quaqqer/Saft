@@ -26,17 +26,20 @@ Stmt: ast::Stmt = {
         => ast::Stmt::Let { ident, expr },
 }
 
+pub SpannedExpr: Spanned<ast::Expr>
+    = Spanned<Expr>;
+
 Expr: ast::Expr = {
     #[precedence(level="0")]
     Term,
 
     #[precedence(level="1")] #[assoc(side="left")]
 
-    <expr:Spanned<Expr>> "(" <args:OptionalSepBy<Spanned<Expr>, ",">> ")"
-        => ast::Expr::Call { expr: Box::new(expr), args },
+    <l:Spanned<Expr>> "*" <r:Spanned<Expr>>
+        => ast::Expr::Mul(Box::new(l), Box::new(r)),
 
-    <expr:Spanned<Expr>> "." <field:Spanned<Ident>>
-        => ast::Expr::Access { expr: Box::new(expr), field },
+    <l:Spanned<Expr>> "/" <r:Spanned<Expr>>
+        => ast::Expr::Div(Box::new(l), Box::new(r)),
 
     #[precedence(level="2")] #[assoc(side="left")]
 
@@ -46,13 +49,13 @@ Expr: ast::Expr = {
     <l:Spanned<Expr>> "-" <r:Spanned<Expr>>
         => ast::Expr::Sub(Box::new(l), Box::new(r)),
 
-    #[precedence(level="2")] #[assoc(side="left")]
+    #[precedence(level="3")] #[assoc(side="left")]
 
-    <l:Spanned<Expr>> "*" <r:Spanned<Expr>>
-        => ast::Expr::Mul(Box::new(l), Box::new(r)),
+    <expr:Spanned<Expr>> "(" <args:OptionalSepBy<Spanned<Expr>, ",">> ")"
+        => ast::Expr::Call { expr: Box::new(expr), args },
 
-    <l:Spanned<Expr>> "/" <r:Spanned<Expr>>
-        => ast::Expr::Div(Box::new(l), Box::new(r)),
+    <expr:Spanned<Expr>> "." <field:Spanned<Ident>>
+        => ast::Expr::Access { expr: Box::new(expr), field },
 }
 
 Term: ast::Expr = {
