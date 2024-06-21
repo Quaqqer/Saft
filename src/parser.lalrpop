@@ -32,10 +32,18 @@ TrailBlock: ast::TrailBlock
            trail_expr.map(Box::new),
        );
 
-pub SpannedTrailBlock: Spanned<ast::TrailBlock> = Spanned<TrailBlock>;
+pub SpannedStmt = Spanned<Stmt>;
 
-pub SpannedExpr: Spanned<ast::Expr>
-    = Spanned<Expr>;
+pub SpannedTrailBlock = Spanned<TrailBlock>;
+
+pub SpannedExpr = Spanned<Expr>;
+
+StmtOrExpr: ast::StmtOrExpr = {
+    <expr:Expr> => ast::StmtOrExpr::Expr(expr),
+    <stmt:Stmt> => ast::StmtOrExpr::Stmt(stmt),
+}
+
+pub SpannedStmtOrExpr = Spanned<StmtOrExpr>;
 
 Expr: ast::Expr = {
     #[precedence(level="0")]

@@ -45,3 +45,8 @@ pub enum Expr {
     Mul(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
     Div(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
 }
+
+pub enum StmtOrExpr {
+    Stmt(Stmt),
+    Expr(Expr),
+}

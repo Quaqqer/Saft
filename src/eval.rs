@@ -17,6 +17,17 @@ impl Value {
             Value::Nil => ValueType::Nil,
         }
     }
+
+    pub fn repr(&self) -> String {
+        match self {
+            Value::Int(v) => format!("{}", v),
+            Value::Bool(v) => match v {
+                true => "true".to_string(),
+                false => "false".to_string(),
+            },
+            Value::Nil => "nil".to_string(),
+        }
+    }
 }
 
 pub enum ValueType {
@@ -43,6 +54,7 @@ pub enum EvaluatorError {
 }
 
 pub struct Evaluator {
+    globals: HashMap<String, Value>,
     call_frames: Vec<CallFrame>,
 }
 
@@ -115,6 +127,7 @@ macro_rules! bail {
 impl Evaluator {
     pub fn new() -> Self {
         Self {
+            globals: HashMap::new(),
             call_frames: vec![CallFrame {
                 scopes: vec![HashMap::new()],
             }],

@@ -5,6 +5,8 @@ pub mod ast;
 pub mod eval;
 mod parser_test;
 pub mod query;
+pub mod repl;
+pub mod saft;
 pub(crate) mod sexpr;
 pub mod span;
 

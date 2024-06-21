@@ -4,8 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+ariadne = "0.4.1"
+directories = "5.0.1"
 indoc = "2.0.5"
 lalrpop-util = { version = "0.20.2", features = ["lexer", "unicode"] }
+rustyline = "14.0.0"
 
 [build-dependencies]
 lalrpop = "0.20.2"
