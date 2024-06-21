@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+indoc = "2.0.5"
 lalrpop-util = { version = "0.20.2", features = ["lexer", "unicode"] }
 
 [build-dependencies]

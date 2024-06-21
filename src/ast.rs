@@ -24,10 +24,14 @@ pub enum Stmt {
 }
 
 #[derive(Debug)]
+pub struct TrailBlock(pub Vec<Spanned<Stmt>>, pub Option<Box<Spanned<Expr>>>);
+
+#[derive(Debug)]
 pub enum Expr {
     Int(i32),
     Bool(bool),
     Var(Spanned<String>),
+    Block(TrailBlock),
     Call {
         expr: Box<Spanned<Expr>>,
         args: Vec<Spanned<Expr>>,

@@ -1,9 +1,12 @@
+use std::collections::HashMap;
+
 use crate::{ast, span::Span};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Value {
     Int(i32),
     Bool(bool),
+    Nil,
 }
 
 impl Value {
@@ -11,6 +14,7 @@ impl Value {
         match self {
             Value::Int(_) => ValueType::Int,
             Value::Bool(_) => ValueType::Bool,
+            Value::Nil => ValueType::Nil,
         }
     }
 }
@@ -18,6 +22,7 @@ impl Value {
 pub enum ValueType {
     Int,
     Bool,
+    Nil,
 }
 
 impl std::fmt::Display for ValueType {
@@ -25,6 +30,7 @@ impl std::fmt::Display for ValueType {
         match self {
             ValueType::Int => write!(f, "int"),
             ValueType::Bool => write!(f, "bool"),
+            ValueType::Nil => write!(f, "nil"),
         }
     }
 }
@@ -36,7 +42,69 @@ pub enum EvaluatorError {
     Text(String, Span),
 }
 
-pub struct Evaluator {}
+pub struct Evaluator {
+    call_frames: Vec<CallFrame>,
+}
+
+struct CallFrame {
+    scopes: Vec<HashMap<String, Value>>,
+}
+
+struct Scopes {}
+
+impl CallFrame {
+    fn new() -> Self {
+        Self {
+            scopes: vec![HashMap::new()],
+        }
+    }
+
+    fn enter_scope(&mut self) {
+        self.scopes.push(HashMap::new());
+    }
+
+    fn exit_scope(&mut self) {
+        self.scopes.pop().unwrap();
+    }
+
+    /// Assign a value to a field in the scopes. Return true if successful
+    ///
+    /// * `ident`: The field
+    /// * `value`: The value to assign the field to
+    fn assign(&mut self, ident: &str, value: Value) -> bool {
+        for scope in self.scopes.iter_mut().rev() {
+            if let Some(cell) = scope.get_mut(ident) {
+                *cell = value;
+                return true;
+            }
+        }
+
+        false
+    }
+
+    /// Declare a value in the outermost scope. Fails if a value is already declared by that name.
+    /// Return the success.
+    ///
+    /// * `ident`: The field name
+    /// * `value`: The value
+    fn declare(&mut self, ident: String, value: Value) -> bool {
+        let res = self.scopes.last_mut().unwrap().try_insert(ident, value);
+        res.is_ok()
+    }
+
+    /// Look a for a field in all scopes. Return the value if found
+    ///
+    /// * `ident`: The field name
+    fn lookup(&self, ident: &str) -> Option<&Value> {
+        for scope in self.scopes.iter().rev() {
+            if let Some(v) = scope.get(ident) {
+                return Some(v);
+            }
+        }
+
+        None
+    }
+}
 
 macro_rules! bail {
     ($span:expr, $($fmts:expr),+) => {
@@ -46,7 +114,60 @@ macro_rules! bail {
 
 impl Evaluator {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            call_frames: vec![CallFrame {
+                scopes: vec![HashMap::new()],
+            }],
+        }
+    }
+
+    fn frame(&self) -> &CallFrame {
+        self.call_frames.last().unwrap()
+    }
+
+    fn frame_mut(&mut self) -> &mut CallFrame {
+        self.call_frames.last_mut().unwrap()
+    }
+
+    fn enter_frame(&mut self) {
+        todo!()
+    }
+
+    fn exit_frame(&mut self) {
+        todo!()
+    }
+
+    fn enter_scope(&mut self) {
+        self.frame_mut().enter_scope();
+    }
+
+    fn exit_scope(&mut self) {
+        self.frame_mut().exit_scope();
+    }
+
+    fn scoped<T>(&mut self, f: impl Fn(&mut Evaluator) -> T) -> T {
+        self.enter_scope();
+        let res = f(self);
+        self.exit_scope();
+        res
+    }
+
+    pub fn exec_stmt(&mut self, stmt: &ast::Stmt, span: &Span) -> Res<()> {
+        match stmt {
+            ast::Stmt::Expr(expr) => {
+                self.eval_expr(&expr.v, &expr.s)?;
+                Ok(())
+            }
+            ast::Stmt::Let { ident, expr } => {
+                let v = self.eval_expr(&expr.v, &expr.s)?;
+                let declared = self.declare(ident.v.clone(), v);
+                if declared {
+                    Ok(())
+                } else {
+                    bail!(ident.s, "Failed to declare variable '{}', it has already been declared in this scope", ident.v);
+                }
+            }
+        }
     }
 
     pub fn eval_expr(&mut self, expr: &ast::Expr, span: &Span) -> Res<Value> {
@@ -81,6 +202,17 @@ impl Evaluator {
                     ))
                 }
             },
+            ast::Expr::Block(ast::TrailBlock(stmts, trail)) => self.scoped(|this| {
+                for stmt in stmts {
+                    this.exec_stmt(&stmt.v, &stmt.s)?;
+                }
+
+                if let Some(expr) = trail {
+                    Ok::<Value, EvaluatorError>(this.eval_expr(&expr.v, &expr.s)?)
+                } else {
+                    Ok(Value::Nil)
+                }
+            })?,
             ast::Expr::Call { expr, args } => todo!(),
             ast::Expr::Access { expr, field } => todo!(),
             ast::Expr::Add(lhs, rhs) => binop!(lhs, rhs, "+", |lhs, rhs| lhs + rhs),
@@ -91,23 +223,23 @@ impl Evaluator {
     }
 
     fn lookup(&self, ident: &str) -> Option<&Value> {
-        todo!()
+        self.frame().lookup(ident)
     }
 
-    fn declare(&mut self, ident: String, value: Value) {
-        todo!()
+    fn declare(&mut self, ident: String, value: Value) -> bool {
+        self.frame_mut().declare(ident, value)
     }
 
-    fn assign(&mut self, ident: &str, value: Value) {
-        todo!()
+    fn assign(&mut self, ident: &str, value: Value) -> bool {
+        self.frame_mut().assign(ident, value)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{ast, span::Spanned};
-
     use super::{Evaluator, Value};
+    use crate::{ast, span::Spanned};
+    use indoc::indoc;
 
     fn parse_expr(source: &'static str) -> Spanned<ast::Expr> {
         crate::parser::SpannedExprParser::new()
@@ -124,5 +256,19 @@ mod tests {
     #[test]
     fn binop() {
         assert_eq!(eval_expr("1 + 2 + 3"), Value::Int(6));
+    }
+
+    #[test]
+    fn variables() {
+        assert_eq!(
+            eval_expr(indoc! {"
+                {
+                    let x = 2;
+                    let y = 3;
+                    x + y
+                }
+            "}),
+            Value::Int(5)
+        );
     }
 }

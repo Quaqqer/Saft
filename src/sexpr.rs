@@ -94,6 +94,16 @@ impl From<&ast::Expr> for SExpr {
                 &expr.v,
                 SExpr::List(args.iter().map(|arg| (&arg.v).into()).collect())
             ),
+            ast::Expr::Block(ast::TrailBlock(stmts, trail)) => {
+                let mut list_vec: Vec<SExpr> = vec![
+                    "block".into(),
+                    SExpr::List(stmts.iter().map(|arg| (&arg.v).into()).collect()),
+                ];
+                if let Some(trail) = trail {
+                    list_vec.push((&trail.v).into());
+                }
+                SExpr::List(list_vec)
+            }
             ast::Expr::Access { expr, field } => list!(".", &expr.v, &field.v),
             ast::Expr::Add(lhs, rhs) => list!("+", &lhs.v, &rhs.v),
             ast::Expr::Sub(lhs, rhs) => list!("-", &lhs.v, &rhs.v),

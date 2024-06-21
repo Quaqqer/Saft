@@ -25,6 +25,15 @@ Stmt: ast::Stmt = {
         => ast::Stmt::Let { ident, expr },
 }
 
+TrailBlock: ast::TrailBlock
+    = "{" <stmts:Spanned<Stmt>*> <trail_expr:Spanned<Expr>?> "}"
+    => ast::TrailBlock(
+           stmts,
+           trail_expr.map(Box::new),
+       );
+
+pub SpannedTrailBlock: Spanned<ast::TrailBlock> = Spanned<TrailBlock>;
+
 pub SpannedExpr: Spanned<ast::Expr>
     = Spanned<Expr>;
 
@@ -60,6 +69,8 @@ Expr: ast::Expr = {
 Term: ast::Expr = {
     "true" => ast::Expr::Bool(true),
     "false" => ast::Expr::Bool(false),
+
+    <block:TrailBlock> => ast::Expr::Block(block),
 
     <var:Spanned<Ident>>
         => ast::Expr::Var(var),
