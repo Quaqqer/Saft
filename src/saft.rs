@@ -17,7 +17,7 @@ macro_rules! bail {
             span: Into::<Span>::into($span),
             kind: Into::<String>::into($kind),
             msg: format!($($fmts),*),
-        });
+        })
     };
 }
 
@@ -52,6 +52,7 @@ pub fn eval_stmt_or_expr(evaluator: &mut Evaluator, src: &str) -> Res<()> {
                 "Got unexpected EOF, expected {:?}",
                 expected
             ),
+
             lalrpop_util::ParseError::UnrecognizedToken { token, expected } => bail!(
                 s,
                 "Parse error",
@@ -62,9 +63,9 @@ pub fn eval_stmt_or_expr(evaluator: &mut Evaluator, src: &str) -> Res<()> {
             lalrpop_util::ParseError::ExtraToken { token } => {
                 bail!(s, "Parse error", "Unexpected extra token '{}'", token.1)
             }
-            lalrpop_util::ParseError::User { error } => unreachable!(),
+
+            lalrpop_util::ParseError::User { .. } => unreachable!(),
         }
-        bail!(parse_error_span(&e), "Parse error", "{}", e);
     })?;
 
     let Spanned { s, v: stmt_or_expr } = stmt_or_expr;
@@ -88,6 +89,6 @@ fn parse_error_span<T, E>(err: &lalrpop_util::ParseError<usize, T, E>) -> Span {
         lalrpop_util::ParseError::UnrecognizedEof { location: l, .. } => Span::new(*l, *l),
         lalrpop_util::ParseError::UnrecognizedToken { token, .. } => Span::new(token.0, token.2),
         lalrpop_util::ParseError::ExtraToken { token } => Span::new(token.0, token.2),
-        lalrpop_util::ParseError::User { error } => unreachable!(),
+        lalrpop_util::ParseError::User { .. } => unreachable!(),
     }
 }

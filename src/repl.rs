@@ -1,4 +1,3 @@
-use crate::{ast::StmtOrExpr, parser::SpannedStmtOrExprParser, span::Spanned};
 use ariadne::{Label, Report, ReportKind, Source};
 use directories::ProjectDirs;
 use rustyline::{error::ReadlineError, DefaultEditor};
@@ -47,7 +46,7 @@ pub fn repl(evaluator: &mut Evaluator) {
                 break;
             }
             Err(err) => {
-                panic!("Got an error in readline")
+                panic!("Got an error {:?} in readline", err)
             }
         }
     }

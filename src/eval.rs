@@ -62,8 +62,6 @@ struct CallFrame {
     scopes: Vec<HashMap<String, Value>>,
 }
 
-struct Scopes {}
-
 impl CallFrame {
     fn new() -> Self {
         Self {
@@ -128,9 +126,7 @@ impl Evaluator {
     pub fn new() -> Self {
         Self {
             globals: HashMap::new(),
-            call_frames: vec![CallFrame {
-                scopes: vec![HashMap::new()],
-            }],
+            call_frames: vec![CallFrame::new()],
         }
     }
 
@@ -165,7 +161,7 @@ impl Evaluator {
         res
     }
 
-    pub fn exec_stmt(&mut self, stmt: &ast::Stmt, span: &Span) -> Res<()> {
+    pub fn exec_stmt(&mut self, stmt: &ast::Stmt, _span: &Span) -> Res<()> {
         match stmt {
             ast::Stmt::Expr(expr) => {
                 self.eval_expr(&expr.v, &expr.s)?;
@@ -226,8 +222,8 @@ impl Evaluator {
                     Ok(Value::Nil)
                 }
             })?,
-            ast::Expr::Call { expr, args } => todo!(),
-            ast::Expr::Access { expr, field } => todo!(),
+            ast::Expr::Call { .. } => todo!(),
+            ast::Expr::Access { .. } => todo!(),
             ast::Expr::Add(lhs, rhs) => binop!(lhs, rhs, "+", |lhs, rhs| lhs + rhs),
             ast::Expr::Sub(lhs, rhs) => binop!(lhs, rhs, "-", |lhs, rhs| lhs - rhs),
             ast::Expr::Mul(lhs, rhs) => binop!(lhs, rhs, "*", |lhs, rhs| lhs * rhs),
