@@ -87,6 +87,7 @@ impl From<&ast::Expr> for SExpr {
     fn from(value: &ast::Expr) -> Self {
         match value {
             ast::Expr::Int(i) => format!("{}", i).into(),
+            ast::Expr::Float(f) => format!("{}", f).into(),
             ast::Expr::Bool(b) => format!("{}", b).into(),
             ast::Expr::Var(v) => v.v.clone().into(),
             ast::Expr::Call { expr, args } => list!(

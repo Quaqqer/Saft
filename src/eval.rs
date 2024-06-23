@@ -2,9 +2,10 @@ use std::collections::HashMap;
 
 use crate::{ast, span::Span};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Value {
-    Int(i32),
+    Int(i64),
+    Float(f64),
     Bool(bool),
     Nil,
 }
@@ -13,6 +14,7 @@ impl Value {
     pub fn ty(&self) -> ValueType {
         match self {
             Value::Int(_) => ValueType::Int,
+            Value::Float(_) => ValueType::Float,
             Value::Bool(_) => ValueType::Bool,
             Value::Nil => ValueType::Nil,
         }
@@ -21,6 +23,7 @@ impl Value {
     pub fn repr(&self) -> String {
         match self {
             Value::Int(v) => format!("{}", v),
+            Value::Float(f) => format!("{}", f),
             Value::Bool(v) => match v {
                 true => "true".to_string(),
                 false => "false".to_string(),
@@ -32,6 +35,7 @@ impl Value {
 
 pub enum ValueType {
     Int,
+    Float,
     Bool,
     Nil,
 }
@@ -40,6 +44,7 @@ impl std::fmt::Display for ValueType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ValueType::Int => write!(f, "int"),
+            ValueType::Float => write!(f, "float"),
             ValueType::Bool => write!(f, "bool"),
             ValueType::Nil => write!(f, "nil"),
         }
@@ -201,6 +206,7 @@ impl Evaluator {
 
         Ok(match expr {
             ast::Expr::Int(i) => Value::Int(*i),
+            ast::Expr::Float(f) => Value::Float(*f),
             ast::Expr::Bool(b) => Value::Bool(*b),
             ast::Expr::Var(ident) => match self.lookup(&ident.v) {
                 Some(val) => val.clone(),

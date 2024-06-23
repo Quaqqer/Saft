@@ -28,7 +28,8 @@ pub struct TrailBlock(pub Vec<Spanned<Stmt>>, pub Option<Box<Spanned<Expr>>>);
 
 #[derive(Debug)]
 pub enum Expr {
-    Int(i32),
+    Int(i64),
+    Float(f64),
     Bool(bool),
     Var(Spanned<String>),
     Block(TrailBlock),

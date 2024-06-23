@@ -4,6 +4,7 @@ use crate::{
     parser::SpannedStmtOrExprParser,
     span::{Span, Spanned},
 };
+use std::fmt::Write;
 
 pub struct SaftError {
     pub span: Span,
@@ -49,16 +50,16 @@ pub fn eval_stmt_or_expr(evaluator: &mut Evaluator, src: &str) -> Res<()> {
             } => bail!(
                 s,
                 "Parse error",
-                "Got unexpected EOF, expected {:?}",
-                expected
+                "Got unexpected EOF, expected {}",
+                expected_list(expected)
             ),
 
             lalrpop_util::ParseError::UnrecognizedToken { token, expected } => bail!(
                 s,
                 "Parse error",
-                "Got unexpected token '{}', expected {:?}",
+                "Got unexpected token '{}', expected {}",
                 token.1,
-                expected
+                expected_list(expected)
             ),
             lalrpop_util::ParseError::ExtraToken { token } => {
                 bail!(s, "Parse error", "Unexpected extra token '{}'", token.1)
@@ -90,5 +91,27 @@ fn parse_error_span<T, E>(err: &lalrpop_util::ParseError<usize, T, E>) -> Span {
         lalrpop_util::ParseError::UnrecognizedToken { token, .. } => Span::new(token.0, token.2),
         lalrpop_util::ParseError::ExtraToken { token } => Span::new(token.0, token.2),
         lalrpop_util::ParseError::User { .. } => unreachable!(),
+    }
+}
+
+fn expected_list(options: Vec<String>) -> String {
+    match &options[..] {
+        [] => unreachable!("Should be at least one expected item"),
+        [choice] => choice.to_string(),
+        [one, two] => format!("{} or {}", one, two),
+        many => {
+            let mut buf = String::new();
+            let last = many.len() - 1;
+            for (i, alt) in many.iter().enumerate() {
+                if i == 0 {
+                    write!(buf, "{}", alt).unwrap();
+                } else if i == last {
+                    write!(buf, ", or {}", alt).unwrap();
+                } else {
+                    write!(buf, ", {}", alt).unwrap();
+                }
+            }
+            buf
+        }
     }
 }

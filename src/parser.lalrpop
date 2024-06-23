@@ -85,6 +85,9 @@ Term: ast::Expr = {
 
     <int_s:r"[0-9]+">
         => ast::Expr::Int(int_s.parse().unwrap()),
+
+    <float_s:r"[0-9]+\.[0-9]*|[0-9]*\.[0-9]+">
+        => ast::Expr::Float(float_s.parse().unwrap()),
 }
 
 Spanned<T>: Spanned<T>
