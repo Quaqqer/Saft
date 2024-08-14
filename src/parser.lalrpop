@@ -46,10 +46,28 @@ StmtOrExpr: ast::StmtOrExpr = {
 pub SpannedStmtOrExpr = Spanned<StmtOrExpr>;
 
 Expr: ast::Expr = {
+    // Terms
     #[precedence(level="0")]
     Term,
 
-    #[precedence(level="1")] #[assoc(side="left")]
+
+    // Terms
+    #[precedence(level="1")]
+
+    // Paths
+    #[precedence(level="2")] #[assoc(side="left")]
+
+    <expr:Spanned<Expr>> "." <field:Spanned<Ident>>
+        => ast::Expr::Access { expr: Box::new(expr), field },
+
+    // Calls
+    #[precedence(level="2")] #[assoc(side="left")]
+
+    <expr:Spanned<Expr>> "(" <args:OptionalSepBy<Spanned<Expr>, ",">> ")"
+        => ast::Expr::Call { expr: Box::new(expr), args },
+
+    // Multiplication, division
+    #[precedence(level="3")] #[assoc(side="left")]
 
     <l:Spanned<Expr>> "*" <r:Spanned<Expr>>
         => ast::Expr::Mul(Box::new(l), Box::new(r)),
@@ -57,7 +75,8 @@ Expr: ast::Expr = {
     <l:Spanned<Expr>> "/" <r:Spanned<Expr>>
         => ast::Expr::Div(Box::new(l), Box::new(r)),
 
-    #[precedence(level="2")] #[assoc(side="left")]
+    // Addition, subtraction
+    #[precedence(level="4")] #[assoc(side="left")]
 
     <l:Spanned<Expr>> "+" <r:Spanned<Expr>>
         => ast::Expr::Add(Box::new(l), Box::new(r)),
@@ -65,13 +84,13 @@ Expr: ast::Expr = {
     <l:Spanned<Expr>> "-" <r:Spanned<Expr>>
         => ast::Expr::Sub(Box::new(l), Box::new(r)),
 
-    #[precedence(level="3")] #[assoc(side="left")]
+    // Arrow functions
+    #[precedence(level="5")] #[assoc(side="left")]
+    <param:Spanned<Ident>> "=>" <expr:Spanned<Expr>>
+        => ast::Expr::ArrowFn(vec![param], Box::new(expr)),
 
-    <expr:Spanned<Expr>> "(" <args:OptionalSepBy<Spanned<Expr>, ",">> ")"
-        => ast::Expr::Call { expr: Box::new(expr), args },
-
-    <expr:Spanned<Expr>> "." <field:Spanned<Ident>>
-        => ast::Expr::Access { expr: Box::new(expr), field },
+    "(" <params:OptionalSepBy<Spanned<Ident>, ",">> ")" "=>" <expr:Spanned<Expr>>
+        => ast::Expr::ArrowFn(params, Box::new(expr)),
 }
 
 Term: ast::Expr = {

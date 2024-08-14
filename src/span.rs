@@ -1,4 +1,4 @@
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub struct Span(usize, usize);
 
 impl Span {
@@ -22,7 +22,7 @@ impl std::fmt::Debug for Span {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Spanned<T> {
     pub v: T,
     pub s: Span,

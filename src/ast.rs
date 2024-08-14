@@ -14,7 +14,7 @@ pub enum Item {
     },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Stmt {
     Expr(Spanned<Expr>),
     Let {
@@ -23,16 +23,17 @@ pub enum Stmt {
     },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TrailBlock(pub Vec<Spanned<Stmt>>, pub Option<Box<Spanned<Expr>>>);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expr {
     Int(i64),
     Float(f64),
     Bool(bool),
     Var(Spanned<String>),
     Block(TrailBlock),
+    ArrowFn(Vec<Spanned<String>>, Box<Spanned<Expr>>),
     Call {
         expr: Box<Spanned<Expr>>,
         args: Vec<Spanned<Expr>>,

@@ -110,6 +110,11 @@ impl From<&ast::Expr> for SExpr {
             ast::Expr::Sub(lhs, rhs) => list!("-", &lhs.v, &rhs.v),
             ast::Expr::Mul(lhs, rhs) => list!("*", &lhs.v, &rhs.v),
             ast::Expr::Div(lhs, rhs) => list!("/", &lhs.v, &rhs.v),
+            ast::Expr::ArrowFn(params, expr) => list!(
+                "arrowfn",
+                SExpr::List(params.iter().map(|arg| (&arg.v).into()).collect()),
+                &expr.v
+            ),
         }
     }
 }

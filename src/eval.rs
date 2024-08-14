@@ -1,13 +1,23 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Write, rc::Rc};
 
-use crate::{ast, span::Span};
+use crate::{
+    ast,
+    span::{Span, Spanned},
+};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub enum Value {
     Int(i64),
     Float(f64),
     Bool(bool),
     Nil,
+    Function(FunctionValue),
+}
+
+#[derive(Debug, Clone)]
+struct FunctionValue {
+    params: Rc<Vec<String>>,
+    body: Rc<Spanned<ast::Expr>>,
 }
 
 impl Value {
@@ -17,6 +27,7 @@ impl Value {
             Value::Float(_) => ValueType::Float,
             Value::Bool(_) => ValueType::Bool,
             Value::Nil => ValueType::Nil,
+            Value::Function(_) => ValueType::Function,
         }
     }
 
@@ -29,6 +40,20 @@ impl Value {
                 false => "false".to_string(),
             },
             Value::Nil => "nil".to_string(),
+            Value::Function(FunctionValue { params, body: _ }) => {
+                let mut s = String::new();
+                write!(s, "(").unwrap();
+                for (i, param) in params.iter().enumerate() {
+                    if i != 0 {
+                        write!(s, ", ").unwrap();
+                    }
+                    write!(s, "{}", param).unwrap();
+                }
+                write!(s, ")").unwrap();
+                write!(s, " => ").unwrap();
+                write!(s, "...").unwrap();
+                s
+            }
         }
     }
 }
@@ -38,16 +63,22 @@ pub enum ValueType {
     Float,
     Bool,
     Nil,
+    Function,
 }
 
 impl std::fmt::Display for ValueType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ValueType::Int => write!(f, "int"),
-            ValueType::Float => write!(f, "float"),
-            ValueType::Bool => write!(f, "bool"),
-            ValueType::Nil => write!(f, "nil"),
-        }
+        write!(
+            f,
+            "{}",
+            match self {
+                ValueType::Int => "int",
+                ValueType::Float => "float",
+                ValueType::Bool => "bool",
+                ValueType::Nil => "nil",
+                ValueType::Function => "function",
+            }
+        )
     }
 }
 
@@ -144,11 +175,18 @@ impl Evaluator {
     }
 
     fn enter_frame(&mut self) {
-        todo!()
+        self.call_frames.push(CallFrame::new());
     }
 
     fn exit_frame(&mut self) {
-        todo!()
+        self.call_frames.pop().unwrap();
+    }
+
+    fn framed<T>(&mut self, f: impl FnOnce(&mut Evaluator) -> T) -> T {
+        self.enter_frame();
+        let res = f(self);
+        self.exit_frame();
+        res
     }
 
     fn enter_scope(&mut self) {
@@ -159,7 +197,7 @@ impl Evaluator {
         self.frame_mut().exit_scope();
     }
 
-    fn scoped<T>(&mut self, f: impl Fn(&mut Evaluator) -> T) -> T {
+    fn scoped<T>(&mut self, f: impl FnOnce(&mut Evaluator) -> T) -> T {
         self.enter_scope();
         let res = f(self);
         self.exit_scope();
@@ -211,10 +249,7 @@ impl Evaluator {
             ast::Expr::Var(ident) => match self.lookup(&ident.v) {
                 Some(val) => val.clone(),
                 None => {
-                    return Err(EvaluatorError::Text(
-                        format!("No variable named {} has been declared", ident.v),
-                        ident.s,
-                    ))
+                    bail!(ident.s, "No variable named {} has been declared", ident.v)
                 }
             },
             ast::Expr::Block(ast::TrailBlock(stmts, trail)) => self.scoped(|this| {
@@ -228,12 +263,46 @@ impl Evaluator {
                     Ok(Value::Nil)
                 }
             })?,
-            ast::Expr::Call { .. } => todo!(),
+            ast::Expr::Call { expr, args } => {
+                let f = self.eval_expr(&expr.v, &expr.s)?;
+
+                let Value::Function(FunctionValue { params, body }) = f else {
+                    bail!(expr.s, "Cannot call a non-function value {}", f.repr());
+                };
+
+                if params.len() != args.len() {
+                    bail!(
+                        span,
+                        "Mismatched number of arguments, expected {} but got {}",
+                        params.len(),
+                        args.len()
+                    );
+                }
+
+                let mut arguments = Vec::with_capacity(args.len());
+                for arg in args {
+                    let v = self.eval_expr(&arg.v, &arg.s)?;
+                    arguments.push(v);
+                }
+
+                self.framed(|this| {
+                    for (param, value) in params.iter().zip(arguments.into_iter()) {
+                        this.declare(param.clone(), value);
+                    }
+
+                    // Push arguments
+                    this.eval_expr(&body.v, &body.s)
+                })?
+            }
             ast::Expr::Access { .. } => todo!(),
             ast::Expr::Add(lhs, rhs) => binop!(lhs, rhs, "+", |lhs, rhs| lhs + rhs),
             ast::Expr::Sub(lhs, rhs) => binop!(lhs, rhs, "-", |lhs, rhs| lhs - rhs),
             ast::Expr::Mul(lhs, rhs) => binop!(lhs, rhs, "*", |lhs, rhs| lhs * rhs),
             ast::Expr::Div(lhs, rhs) => binop!(lhs, rhs, "/", |lhs, rhs| lhs / rhs),
+            ast::Expr::ArrowFn(params, expr) => Value::Function(FunctionValue {
+                params: Rc::new(params.iter().map(|sv| sv.v.clone()).collect()),
+                body: Rc::new((**expr).clone()),
+            }),
         })
     }
 
@@ -252,6 +321,8 @@ impl Evaluator {
 
 #[cfg(test)]
 mod tests {
+    use std::assert_matches::assert_matches;
+
     use super::{Evaluator, Value};
     use crate::{ast, span::Spanned};
     use indoc::indoc;
@@ -270,12 +341,12 @@ mod tests {
 
     #[test]
     fn binop() {
-        assert_eq!(eval_expr("1 + 2 + 3"), Value::Int(6));
+        assert_matches!(eval_expr("1 + 2 + 3"), Value::Int(6));
     }
 
     #[test]
     fn variables() {
-        assert_eq!(
+        assert_matches!(
             eval_expr(indoc! {"
                 {
                     let x = 2;
@@ -283,7 +354,7 @@ mod tests {
                     x + y
                 }
             "}),
-            Value::Int(5)
+            Value::Int(5),
         );
     }
 }

@@ -1,5 +1,5 @@
 #![allow(clippy::new_without_default)]
-#![feature(map_try_insert)]
+#![feature(map_try_insert, assert_matches)]
 
 pub mod ast;
 pub mod eval;
