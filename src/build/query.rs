@@ -1,6 +1,8 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use crate::{ast, span::Spanned};
+use crate::lang::ast;
+use crate::lang::parser;
+use crate::span::Spanned;
 
 pub struct SaftBuilder {
     root: PathBuf,
@@ -68,7 +70,7 @@ impl SaftBuilder {
 
     pub fn query_ast(&mut self, module: &ModuleName) -> QueryResult<Spanned<ast::Module>> {
         let source = self.query_source(module)?;
-        match crate::parser::SpannedModuleParser::new().parse(&source) {
+        match parser::SpannedModuleParser::new().parse(&source) {
             Ok(ast) => Ok(ast),
             Err(err) => Err(QueryError::ParseError(module.clone(), err.to_string())),
         }
@@ -91,12 +93,12 @@ mod tests {
 
         assert_eq!(
             sb.query_source(main).unwrap(),
-            include_str!("../res/query_test/main.saft")
+            include_str!("../../res/query_test/main.saft")
         );
 
         assert_eq!(
             sb.query_source(lib_asserts).unwrap(),
-            include_str!("../res/query_test/lib/asserts.saft")
+            include_str!("../../res/query_test/lib/asserts.saft")
         );
     }
 

@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fmt::Write, rc::Rc};
 
 use crate::{
-    ast,
+    lang::ast,
     span::{Span, Spanned},
 };
 
@@ -15,7 +15,7 @@ pub enum Value {
 }
 
 #[derive(Debug, Clone)]
-struct FunctionValue {
+pub struct FunctionValue {
     params: Rc<Vec<String>>,
     body: Rc<Spanned<ast::Expr>>,
 }

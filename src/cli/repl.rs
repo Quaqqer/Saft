@@ -2,8 +2,8 @@ use ariadne::{Label, Report, ReportKind, Source};
 use directories::ProjectDirs;
 use rustyline::{error::ReadlineError, DefaultEditor};
 
-use crate::eval::Evaluator;
-use crate::saft;
+use crate::lang::eval::Evaluator;
+use crate::lang::saft;
 
 pub fn repl(evaluator: &mut Evaluator) {
     let mut rl = DefaultEditor::new().expect("Should be to run readline repl");

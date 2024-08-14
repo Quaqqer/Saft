@@ -1,6 +1,6 @@
-use saft::eval::Evaluator;
+use saft::lang::eval::Evaluator;
 
 fn main() {
     let mut evaluator = Evaluator::new();
-    saft::repl::repl(&mut evaluator);
+    saft::cli::repl::repl(&mut evaluator);
 }

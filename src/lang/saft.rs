@@ -1,7 +1,7 @@
 use crate::{
-    ast::StmtOrExpr,
-    eval::{Evaluator, EvaluatorError},
-    parser::SpannedStmtOrExprParser,
+    lang::ast::StmtOrExpr,
+    lang::eval::{Evaluator, EvaluatorError},
+    lang::parser::SpannedStmtOrExprParser,
     span::{Span, Spanned},
 };
 use std::fmt::Write;

@@ -5,7 +5,9 @@ edition = "2021"
 
 [dependencies]
 ariadne = "0.4.1"
+clap = { version = "4.5.15", features = ["derive"] }
 directories = "5.0.1"
+goldentests = "1.1.1"
 indoc = "2.0.5"
 lalrpop-util = { version = "0.20.2", features = ["lexer", "unicode"] }
 rustyline = "14.0.0"
