@@ -2,16 +2,7 @@ use crate::span::Spanned;
 
 #[derive(Debug)]
 pub struct Module {
-    pub items: Vec<Spanned<Item>>,
-}
-
-#[derive(Debug)]
-pub enum Item {
-    Fn {
-        ident: Spanned<String>,
-        params: Vec<Spanned<String>>,
-        stmts: Vec<Spanned<Stmt>>,
-    },
+    pub stmts: Vec<Spanned<Stmt>>,
 }
 
 #[derive(Debug, Clone)]

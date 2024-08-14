@@ -12,6 +12,7 @@ pub enum Value {
     Bool(bool),
     Nil,
     Function(FunctionValue),
+    Module(HashMap<String, Value>),
 }
 
 #[derive(Debug, Clone)]
@@ -28,6 +29,7 @@ impl Value {
             Value::Bool(_) => ValueType::Bool,
             Value::Nil => ValueType::Nil,
             Value::Function(_) => ValueType::Function,
+            Value::Module(_) => ValueType::Module,
         }
     }
 
@@ -54,6 +56,7 @@ impl Value {
                 write!(s, "...").unwrap();
                 s
             }
+            Value::Module(_) => "module".to_string(),
         }
     }
 }
@@ -64,6 +67,7 @@ pub enum ValueType {
     Bool,
     Nil,
     Function,
+    Module,
 }
 
 impl std::fmt::Display for ValueType {
@@ -77,6 +81,7 @@ impl std::fmt::Display for ValueType {
                 ValueType::Bool => "bool",
                 ValueType::Nil => "nil",
                 ValueType::Function => "function",
+                ValueType::Module => "module",
             }
         )
     }
@@ -324,11 +329,11 @@ mod tests {
     use std::assert_matches::assert_matches;
 
     use super::{Evaluator, Value};
-    use crate::{ast, span::Spanned};
+    use crate::{lang::ast, span::Spanned};
     use indoc::indoc;
 
     fn parse_expr(source: &'static str) -> Spanned<ast::Expr> {
-        crate::parser::SpannedExprParser::new()
+        crate::lang::parser::SpannedExprParser::new()
             .parse(source)
             .unwrap()
     }

@@ -1,4 +1,4 @@
-use crate::ast;
+use crate::lang::ast;
 
 pub(crate) enum SExpr {
     List(Vec<SExpr>),
@@ -52,25 +52,8 @@ impl From<&ast::Module> for SExpr {
     fn from(value: &ast::Module) -> Self {
         list!(
             "module",
-            SExpr::List(value.items.iter().map(|item| (&item.v).into()).collect())
+            SExpr::List(value.stmts.iter().map(|item| (&item.v).into()).collect())
         )
-    }
-}
-
-impl From<&ast::Item> for SExpr {
-    fn from(value: &ast::Item) -> Self {
-        match value {
-            ast::Item::Fn {
-                ident,
-                params,
-                stmts,
-            } => list!(
-                "fn",
-                &ident.v,
-                SExpr::List(params.iter().map(|param| (&param.v).into()).collect()),
-                SExpr::List(stmts.iter().map(|stmt| (&stmt.v).into()).collect())
-            ),
-        }
     }
 }
 

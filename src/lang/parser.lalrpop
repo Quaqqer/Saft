@@ -6,16 +6,12 @@ grammar;
 pub SpannedModule: Spanned<ast::Module> = Spanned<Module>;
 
 Module: ast::Module
-    = <items:Spanned<Item>*>
-    => ast::Module { items };
+    = <stmts:Spanned<Stmt>*>
+    => ast::Module { stmts };
 
 Ident: String
     = <s:r"[a-zA-Z_][a-zA-Z0-9_]*">
     => s.to_string();
-
-Item: ast::Item
-    = "fn" <ident:Spanned<Ident>> "(" <params:Spanned<Ident>*> ")" "{" <stmts:Spanned<Stmt>*> "}"
-    => ast::Item::Fn { ident, params, stmts };
 
 Stmt: ast::Stmt = {
     <expr:Spanned<Expr>> ";"
@@ -63,7 +59,7 @@ Expr: ast::Expr = {
     // Calls
     #[precedence(level="2")] #[assoc(side="left")]
 
-    <expr:Spanned<Expr>> "(" <args:OptionalSepBy<Spanned<Expr>, ",">> ")"
+    <expr:Spanned<Expr>> "(" <args:OptionalSepBy<SpannedExpr, ",">> ")"
         => ast::Expr::Call { expr: Box::new(expr), args },
 
     // Multiplication, division
