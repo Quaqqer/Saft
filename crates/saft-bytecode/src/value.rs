@@ -278,7 +278,7 @@ impl Cast<bool> for Value {
 
 impl Cast<i64> for Value {
     fn name() -> String {
-        "bool".into()
+        "int".into()
     }
 
     fn cast(&self) -> Option<i64> {
@@ -288,7 +288,7 @@ impl Cast<i64> for Value {
 
 impl Cast<f64> for Value {
     fn name() -> String {
-        "bool".into()
+        "float".into()
     }
 
     fn cast(&self) -> Option<f64> {

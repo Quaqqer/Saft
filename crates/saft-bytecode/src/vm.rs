@@ -55,7 +55,7 @@ impl Error {
 
 macro_rules! exotic {
     ($msg:expr, $span:expr) => {
-        return Err(Error::Exotic {
+        return Err(crate::vm::Error::Exotic {
             message: $msg.into(),
             span: $span.clone(),
             note: None,
@@ -63,13 +63,15 @@ macro_rules! exotic {
     };
 
     ($msg:expr, $span:expr, $note:expr) => {
-        return Err(Error::Exotic {
+        return Err(crate::vm::Error::Exotic {
             message: $msg.into(),
             span: $span.clone(),
             note: Some($note.into()),
         })
     };
 }
+
+pub(crate) use exotic;
 
 pub struct Vm {
     call_stack: Vec<CallFrame>,

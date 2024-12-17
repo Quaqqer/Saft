@@ -38,6 +38,11 @@ impl Saft {
     pub fn new_with_std() -> Self {
         let mut saft = Self::new();
         saft.add_native(saft_bytecode::natives::print);
+        saft.add_native(saft_bytecode::natives::sin);
+        saft.add_native(saft_bytecode::natives::cos);
+        saft.add_native(saft_bytecode::natives::reverse_bits);
+        saft.add_native(saft_bytecode::natives::hypot);
+        saft.add_native(saft_bytecode::natives::fib);
         saft
     }
 
